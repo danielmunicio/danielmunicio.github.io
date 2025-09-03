@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CS 180: Project 0</title>
+  <style>
+    body {
+      font-family: Times New Roman, sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .section {
+      margin-bottom: 3rem;
+    }
+    .image-pair {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .image-pair div {
+      flex: 1 1 45%;
+      max-width: 45%;
+      text-align: center;
+    }
+    .image-pair img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .caption {
+      text-align: center;
+      font-style: italic;
+      margin-top: 0.5rem;
+    }
+    .image-sequence {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .image-sequence img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>CS 180: Project 1</h1>
+
+  <div class="section">
+    <h2>Part 1: Selfie: The Wrong Way vs. The Right Way</h2>
+    <div class="image-pair">
+      <div>
+        <img src="images/close_up_face.jpg"/>
+        <p class="caption">Close Up Image... Yikes</p>
+      </div>
+      <div>
+        <img src="images/far_away_zoom_face.jpg"/>
+        <p class="caption">Far Away Image With Zoom! Better... but there's only so much the angles can do </3</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Part 2: Architectural Perspective Compression</h2>
+    <div class="image-pair">
+      <div>
+        <img src="images/no_zoom_street.jpg"/>
+        <p class="caption">Zoomed In Photo</p>
+      </div>
+      <div>
+        <img src="images/zoomed_in_street.jpg"/>
+        <p class="caption">No Zoom Photo</p>
+	<!-- Are you supposed to do capitalize every word in captions? -->
+      </div>
+    </div>
+    <p style="text-align: center;"> These pictures were taken at the corner of California st and Virginia st.
+  </div>
+
+  <div class="section">
+    <h2>Part 3: The Dolly Zoom</h2>
+    <div class="image-sequence">
+      <!-- Replace with frames if you want individual images -->
+      <img src="images/cookie.gif"/>
+    </div>
+    <p class="caption">The mesmerizing call of the cookies beckons me from across the room</p>
+  </div>
+
+</body>
+</html>
+
