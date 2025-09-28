@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project 2: Fun with Filters and Frequencies!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Project 2: Fun with Filters and Frequencies!</h1>
+
+    <h2>Part 1.1: Convolutions from Scratch!</h2>
+    <p>In this section, I implemented convolutions on a selfie using different approaches: a naive 4 for-loop implementation, a 2 for-loop vectorized approach, and scipy's highly optimized <code>convolve2d</code>. The time taken for each approach demonstrates the impact of vectorization: the 4 for-loop version took 153.81 seconds, the 2 for-loop version took 11.59 seconds, and the <code>convolve2d</code> function took just 0.16 seconds. To maintain the same output size as the input image, I padded the image with zeros based on the kernel size.</p>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Box Convolution on Image of Myself</b></p>
+        <img src="images/part1/project_2_part_1.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Gradient Convolution on Image of Myself</b></p>
+        <img src="images/part1/finite_difference_part_1.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <p>The corresponding code snippets for padding, the 4 for-loop version, 2 for-loop version, and scipy's <code>convolve2d</code> implementation are shown below.</p>
+    <img src="images/part1/code_snippet.png" style="max-width:100%; max-height:300px; height:auto; width:auto;">
+
+    <h2>Part 1.2: Finite Difference Operator</h2>
+    <p>I calculated partial derivatives along the x and y directions using finite differences, producing a gradient magnitude image and a binarized edge image. Vertical edges are more pronounced in the x-derivative image, and horizontal edges are more pronounced in the y-derivative image. I computed the gradient magnitude as the square root of the sum of squares of the two derivatives, and the binary image used a threshold chosen to preserve most edges while removing noise.</p>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Original Cameraman Image</b></p>
+        <img src="images/part1/finite_difference_part_1_2.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
+    <p>I compared two procedures for applying Derivative-of-Gaussian filters. In procedure 1, I blurred the original image with a Gaussian, then convolved with Dx and Dy filters to compute the gradient magnitude and binarized edge images. In procedure 2, I first convolved the Gaussian kernel with Dx and Dy to create combined filters, then applied these to the original image. Both methods produced equivalent final results.</p>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Procedure 1: Blurred Cameraman Image</b></p>
+        <img src="images/part1/Blurred_Image_part_1_3.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Procedure 2: DoG Applied</b></p>
+        <img src="images/part1/DoG_Image_1_3.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>DoG Filters</b></p>
+        <img src="images/part1/Derivative_of_Gaussian.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <h2>Part 2.1: Image Sharpening</h2>
+    <p>I implemented image sharpening using an unsharp mask. A blurred version of the image is subtracted from the original to isolate high-frequency components (edges), which are then scaled by a constant and added back to the original image. Sharpening a blurred image exaggerates edges and artifacts introduced by the blur, whereas sharpening a near-original image preserves natural details.</p>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <img src="images/part2/sharpen_image_demo.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <p>I also applied sharpening to a selfie of me to demonstrate edge enhancement.</p>
+    <div style="text-align: center; margin: 0 10px;">
+        <img src="images/part2/sharp_demo_selfie.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <h2>Part 2.2: Hybrid Images</h2>
+    <p>I created hybrid images by combining a low-pass filtered image with a high-pass filtered image. Close-up views emphasize high-frequency details, while distant views emphasize low-frequency content. Examples include LeBron and Bronny James, as well as Tom Brady and Drake Maye.</p>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>LeBron and Bronny James Merged Together</b></p>
+        <img src="images/part2/bron_bronny_final.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>FFT of Images</b></p>
+        <img src="images/part2/fft_final.png" style="max-width:100%; max-height:300px; height:auto; width:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Tom Brady and Drake Maye Merged</b></p>
+        <img src="images/part2/Brady_Maye.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Derek and His Cat Merged</b></p>
+        <img src="images/part2/Derek_Cat.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <h2>Part 2.3: Gaussian and Laplacian Stacking</h2>
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Apple and Orange Merge</b></p>
+        <img src="images/part_3/orange_blend_final.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <h2>Part 2.4: Multiresolution Blending</h2>
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Tom Brady and Drake Maye Images Merged</b></p>
+        <img src="images/part_3/brady_maye_split.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>LeBron and Bronny Jr Images Merged</b></p>
+        <img src="images/part_3/bron_bronny_split.png" style="max-width:100%; height:auto;">
+    </div>
+</body>
+</html>
