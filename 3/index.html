@@ -4,36 +4,92 @@
     <title>Project 2: Fun with Filters and Frequencies!</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Times, sans-serif;
             margin: 20px;
         }
     </style>
+
+    <!-- Prism.js CSS (Nice Option #2) -->
+    <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
+    <!-- MathJax for LaTeX equations -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+
 </head>
 <body>
     <h1>Project 2: Fun with Filters and Frequencies!</h1>
 
     <h2>Part 1.1: Convolutions from Scratch!</h2>
-    <p>In this section, I implemented convolutions on a selfie using different approaches: a naive 4 for-loop implementation, a 2 for-loop vectorized approach, and scipy's highly optimized <code>convolve2d</code>. The time taken for each approach demonstrates the impact of vectorization: the 4 for-loop version took 153.81 seconds, the 2 for-loop version took 11.59 seconds, and the <code>convolve2d</code> function took just 0.16 seconds. To maintain the same output size as the input image, I padded the image with zeros based on the kernel size.</p>
+    <p>In this section, I implemented convolutions on a selfie using different approaches: a naive 4 for-loop implementation, a 2 for-loop vectorized approach, and scipy's highly optimized <code>convolve2d</code>.
+         The time taken for each approach demonstrates the impact of vectorization: the 4 for-loop version took 153.81 seconds, the 2 for-loop version took 11.59 seconds,
+          and the <code>convolve2d</code> function took just 0.16 seconds. To maintain the same output size as the input image, I padded the image with zeros based on the kernel size.</p>
+    <p>The 2 for-loop implementation first adds padding to the image based on the size of the convolutional filter. It then calculates the starting and ending points where the center of the convolutional filter will slide to and from </p>
+    <p>It then slides it over throughout the x and y of the image (our 2 for loops), and then computes the dot product between filter and image area using <code>np.dot(area.flatten(), filter.flatten())</code></p>
+    <p>The 4 for-loop implementation does the same process, but instead of <code>np.dot</code>, it uses 2 more for loops to calculate the dot product between the images</p>
 
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>Box Convolution on Image of Myself</b></p>
-        <img src="images/part1/project_2_part_1.png" style="max-width:100%; height:auto;">
+        <h3><b>Box Convolution on Image of Myself: </b></h3>
+        <img src="images/part1/ConvolutionsOnDaniel.png" style="max-width:100%; height:auto;">
     </div>
 
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>Gradient Convolution on Image of Myself</b></p>
-        <img src="images/part1/finite_difference_part_1.png" style="max-width:100%; height:auto;">
+        <h3><b>Gradient Convolution on Image of Myself</b></h3>
+        <img src="images/part1/DerivativeFilterDaniel.png" style="max-width:100%; height:auto;">
     </div>
 
-    <p>The corresponding code snippets for padding, the 4 for-loop version, 2 for-loop version, and scipy's <code>convolve2d</code> implementation are shown below.</p>
-    <img src="images/part1/code_snippet.png" style="max-width:100%; max-height:300px; height:auto; width:auto;">
+    <h4>Convolutional Filter Code: </h4>
+    <pre><code class="language-python">
+def convolve(image, filter, padding=True, many_loops=False):
+    w, h = image.shape
+    fw, fh = filter.shape
+    f_x_len = int((fw - 1) / 2)
+    f_y_len = int((fh - 1) / 2)
+
+    if padding:
+        pad_x = fw // 2
+        pad_y = fh // 2
+        img_padded = np.pad(image, ((pad_x, pad_x), (pad_y, pad_y)), mode='constant', constant_values=0)
+    else:
+        img_padded = image
+
+    w, h = img_padded.shape
+    start_x = f_x_len
+    end_x = w - f_x_len - 1
+    
+    start_y = f_y_len
+    end_y = h - f_y_len - 1
+
+    result = np.zeros_like(image, dtype=np.float32)
+
+    for i, x in enumerate(range(start_x, end_x + 1)):
+        for j, y in enumerate(range(start_y, end_y + 1)):
+            area = img_padded[x-f_x_len:x+f_x_len+1, y-f_y_len:y+f_y_len+1]
+            if many_loops:
+                output = 0
+                for h in range(area.shape[0]):
+                    for k in range(area.shape[1]):
+                        output += area[h][k] * filter[h][k]
+
+            output = np.dot(area.flatten(), filter.flatten())
+            result[i, j] = output
+
+    return result
+
+   </code></pre>
 
     <h2>Part 1.2: Finite Difference Operator</h2>
-    <p>I calculated partial derivatives along the x and y directions using finite differences, producing a gradient magnitude image and a binarized edge image. Vertical edges are more pronounced in the x-derivative image, and horizontal edges are more pronounced in the y-derivative image. I computed the gradient magnitude as the square root of the sum of squares of the two derivatives, and the binary image used a threshold chosen to preserve most edges while removing noise.</p>
+    <p>I calculated partial derivatives along the x and y directions by passing over the finite difference filter [1, 0, -1].
+        You can then produce a gradient magnitude image by taking the square root of the sum of squares of the 2 partial derivative images.
+        Then, to get a binarized edge image, you just make each pixel either black or white based on some tolerance, 0.45 for my solution iirc.
+    </p>
 
     <div style="text-align: center; margin: 0 10px;">
         <p><b>Original Cameraman Image</b></p>
-        <img src="images/part1/finite_difference_part_1_2.png" style="max-width:100%; height:auto;">
+        <img src="images/part1/cameraman.png" style="max-width:100%; height:auto;">
+    </div>
+
+    <div style="text-align: center; margin: 0 10px;">
+        <p><b>Result of Finite Difference Filter on Cameraman Image</b></p>
+        <img src="images/part1/finite_difference_part_1_2_cropped.png" style="max-width:100%; height:auto;">
     </div>
 
     <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
@@ -41,63 +97,78 @@
 
     <div style="text-align: center; margin: 0 10px;">
         <p><b>Procedure 1: Blurred Cameraman Image</b></p>
-        <img src="images/part1/Blurred_Image_part_1_3.png" style="max-width:100%; height:auto;">
+        <img src="images/part1/Blurred_Image_part_1_3_cropped.png" style="max-width:100%; height:auto;">
     </div>
 
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>Procedure 2: DoG Applied</b></p>
-        <img src="images/part1/DoG_Image_1_3.png" style="max-width:100%; height:auto;">
+        <h3><b>Procedure 2: DoG Applied</b></h3>
+        <img src="images/part1/DoG_Image_1_3_cropped.png" style="max-width:100%; height:auto;">
     </div>
 
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>DoG Filters</b></p>
+        <h3><b>DoG Filters</b></h3>
         <img src="images/part1/Derivative_of_Gaussian.png" style="max-width:100%; height:auto;">
     </div>
 
     <h2>Part 2.1: Image Sharpening</h2>
-    <p>I implemented image sharpening using an unsharp mask. A blurred version of the image is subtracted from the original to isolate high-frequency components (edges), which are then scaled by a constant and added back to the original image. Sharpening a blurred image exaggerates edges and artifacts introduced by the blur, whereas sharpening a near-original image preserves natural details.</p>
+    <p>Image sharpening is actually surprisingly easy to implement! </p>
+    <p>The key idea is by isolating the high frequency components from the image, and adding scaled versions of them back to the image.</p>
+    <p>You can get the high frequency components by just subtracting the low frequency components from the image itself. </p>
+    <p>The Low Frequency components are really easy to seperate, you can get them just by convolving a Gaussian Kernel over the image</p>
 
     <div style="text-align: center; margin: 0 10px;">
-        <img src="images/part2/sharpen_image_demo.png" style="max-width:100%; height:auto;">
+        <img src="images/part2/taj_sharpening_demo_cropped.png" style="max-width:150%; height:auto;">
     </div>
 
     <p>I also applied sharpening to a selfie of me to demonstrate edge enhancement.</p>
     <div style="text-align: center; margin: 0 10px;">
-        <img src="images/part2/sharp_demo_selfie.png" style="max-width:100%; height:auto;">
+        <img src="images/part2/daniel_sharpening_demo.png" style="max-width:150%; height:auto;">
     </div>
 
     <h2>Part 2.2: Hybrid Images</h2>
-    <p>I created hybrid images by combining a low-pass filtered image with a high-pass filtered image. Close-up views emphasize high-frequency details, while distant views emphasize low-frequency content. Examples include LeBron and Bronny James, as well as Tom Brady and Drake Maye.</p>
+    <p>Making hybrid images is surprisingly easy! (Given that the images are aligned using the already given starter code)</p>
+    <p>All you have to do, is combine the low-pass filtered version of one image, with the high-pass filtered version of another image</p>
+    <p>The low frequnecy image will become more apparent when viewed from far away, while the high frequency version will be more apparent when close up</p>
+
 
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>LeBron and Bronny James Merged Together</b></p>
-        <img src="images/part2/bron_bronny_final.png" style="max-width:100%; height:auto;">
+        <h3><b>LeBron and Bronny James Merged Together</b></h3>
+        <img src="images/part2/bron_bronny_merged_cropped.png" style="max-width:100%; height:auto;">
     </div>
 
     <div style="text-align: center; margin: 0 10px;">
         <p><b>FFT of Images</b></p>
-        <img src="images/part2/fft_final.png" style="max-width:100%; max-height:300px; height:auto; width:auto;">
+        <img src="images/part2/fft_final_cropped.png" style="max-width:100%; max-height:300px; height:auto; width:auto;">
     </div>
 
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>Tom Brady and Drake Maye Merged</b></p>
-        <img src="images/part2/Brady_Maye.png" style="max-width:100%; height:auto;">
+        <h3><b>Tom Brady and Drake Maye Merged</b></h3>
+        <img src="images/part2/Brady_Maye_cropped.png" style="max-width:100%; height:auto;">
     </div>
 
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>Derek and His Cat Merged</b></p>
+        <h3><b>Derek and His Cat Merged</b></h3>
         <img src="images/part2/Derek_Cat.png" style="max-width:100%; height:auto;">
     </div>
 
     <h2>Part 2.3: Gaussian and Laplacian Stacking</h2>
+    <p>Gaussian and Laplacian stacks are also implemented here. </p>
+    <p>Gaussian stacks start with an initial image, and then progressively blur it more and more each layer</p>
+    <p>Laplacian stacks follow the same principle, but subtracting the low frequency portion from the image in each layer</p>
+    <p>Here's the Laplacian Stacks used to merge the apple and orange images:</p>
+    <p>To merge images, you also take the laplacian of the mask, using the formula given in the paper:</p>
+    
+<p style="text-align: center;">
+    $$L_S(i, j) = G_R(i, j) \, L_A(i, j) + (1 - G_R(i, j)) \, L_B(i, j)$$
+</p>
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>Apple and Orange Merge</b></p>
+        <h3><b>Apple and Orange Merge</b></h3>
         <img src="images/part_3/orange_blend_final.png" style="max-width:100%; height:auto;">
     </div>
 
     <h2>Part 2.4: Multiresolution Blending</h2>
     <div style="text-align: center; margin: 0 10px;">
-        <p><b>Tom Brady and Drake Maye Images Merged</b></p>
+        <h3><b>Tom Brady and Drake Maye Images Merged</b></h3>
         <img src="images/part_3/brady_maye_split.png" style="max-width:100%; height:auto;">
     </div>
 
@@ -105,5 +176,9 @@
         <p><b>LeBron and Bronny Jr Images Merged</b></p>
         <img src="images/part_3/bron_bronny_split.png" style="max-width:100%; height:auto;">
     </div>
+
+    <!-- Prism.js JS (loads at end for performance) -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
 </body>
 </html>
