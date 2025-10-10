@@ -1,183 +1,373 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Project 2: Fun with Filters and Frequencies!</title>
+    <title>Project 3: Face Morphing and Mosaicing</title>
     <style>
         body {
             font-family: Times, sans-serif;
             margin: 20px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .image-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .image-container {
+            text-align: center;
+            flex: 1;
+            min-width: 300px;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .full-width-image {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .full-width-image img {
+            max-width: 90%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .equation {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #4CAF50;
+            font-family: 'Courier New', monospace;
         }
     </style>
-
-    <!-- Prism.js CSS (Nice Option #2) -->
+    <!-- Prism.js CSS -->
     <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet" />
     <!-- MathJax for LaTeX equations -->
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
 </head>
 <body>
-    <h1>Project 2: Fun with Filters and Frequencies!</h1>
+    <h1>Project 3: Face Morphing and Mosaicing</h1>
+    <p><strong>Daniel Bronfman</strong></p>
 
-    <h2>Part 1.1: Convolutions from Scratch!</h2>
-    <p>In this section, I implemented convolutions on a selfie using different approaches: a naive 4 for-loop implementation, a 2 for-loop vectorized approach, and scipy's highly optimized <code>convolve2d</code>.
-         The time taken for each approach demonstrates the impact of vectorization: the 4 for-loop version took 153.81 seconds, the 2 for-loop version took 11.59 seconds,
-          and the <code>convolve2d</code> function took just 0.16 seconds. To maintain the same output size as the input image, I padded the image with zeros based on the kernel size.</p>
-    <p>The 2 for-loop implementation first adds padding to the image based on the size of the convolutional filter. It then calculates the starting and ending points where the center of the convolutional filter will slide to and from </p>
-    <p>It then slides it over throughout the x and y of the image (our 2 for loops), and then computes the dot product between filter and image area using <code>np.dot(area.flatten(), filter.flatten())</code></p>
-    <p>The 4 for-loop implementation does the same process, but instead of <code>np.dot</code>, it uses 2 more for loops to calculate the dot product between the images</p>
+    <h2>Overview</h2>
+    <p>In this project, I implemented image mosaicing by computing homographies, warping images using different interpolation methods, and blending them together. The project demonstrates homography recovery, image rectification, and panorama creation through projective transformations.</p>
 
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>Box Convolution on Image of Myself: </b></h3>
-        <img src="images/part1/ConvolutionsOnDaniel.png" style="max-width:100%; height:auto;">
+    <!-- ============= PART A.1 ============= -->
+    <h2>Part A.1: Shoot and Digitize Pictures</h2>
+    <p>I captured multiple sets of photographs with projective transformations between them. The key technique was to fix the center of projection (camera position) and rotate the camera to capture overlapping views. This ensures the transformation between images is a pure homography (projective transformation).</p>
+
+    <h3>Image Set 1: Robotics Lab (ur1 & ur2)</h3>
+    <p>This set captures the robotics lab with detailed features for correspondence matching. Shot by rotating the camera while keeping the center of projection fixed.</p>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="images/part3/ur1.jpg" alt="Robotics lab 1">
+            <p><strong>Robotics Lab 1 (Left view)</strong></p>
+        </div>
+        <div class="image-container">
+            <img src="images/part3/ur2.jpg" alt="Robotics lab 2">
+            <p><strong>Robotics Lab 2 (Right view)</strong></p>
+        </div>
     </div>
 
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>Gradient Convolution on Image of Myself</b></h3>
-        <img src="images/part1/DerivativeFilterDaniel.png" style="max-width:100%; height:auto;">
+    <h3>Image Set 2: Outdoor Scene (p3 & p4)</h3>
+    <p>Another set showing an outdoor scene with good feature overlap for correspondence matching.</p>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="images/part3/p3.jpg" alt="Outdoor scene 1">
+            <p><strong>Image 1 (Left view)</strong></p>
+        </div>
+        <div class="image-container">
+            <img src="images/part3/p4.jpg" alt="Outdoor scene 2">
+            <p><strong>Image 2 (Right view)</strong></p>
+        </div>
     </div>
 
-    <h4>Convolutional Filter Code: </h4>
-    <pre><code class="language-python">
-def convolve(image, filter, padding=True, many_loops=False):
-    w, h = image.shape
-    fw, fh = filter.shape
-    f_x_len = int((fw - 1) / 2)
-    f_y_len = int((fh - 1) / 2)
+    <!-- ============= PART A.2 ============= -->
+    <h2>Part A.2: Recover Homographies</h2>
+    <p>To align images, I implemented homography recovery from point correspondences. A homography is a 3x3 matrix \(H\) that maps points from one image to another: \(\mathbf{p'} = H\mathbf{p}\).</p>
 
-    if padding:
-        pad_x = fw // 2
-        pad_y = fh // 2
-        img_padded = np.pad(image, ((pad_x, pad_x), (pad_y, pad_y)), mode='constant', constant_values=0)
-    else:
-        img_padded = image
+    <h3>Mathematical Formulation</h3>
+    <p>Given \(n\) point correspondences \((\mathbf{p}_i, \mathbf{p'}_i)\), where \(\mathbf{p}_i = (x_i, y_i)\) and \(\mathbf{p'}_i = (u_i, v_i)\), we can set up a system of equations. For each correspondence, the homography gives us:</p>
 
-    w, h = img_padded.shape
-    start_x = f_x_len
-    end_x = w - f_x_len - 1
-    
-    start_y = f_y_len
-    end_y = h - f_y_len - 1
-
-    result = np.zeros_like(image, dtype=np.float32)
-
-    for i, x in enumerate(range(start_x, end_x + 1)):
-        for j, y in enumerate(range(start_y, end_y + 1)):
-            area = img_padded[x-f_x_len:x+f_x_len+1, y-f_y_len:y+f_y_len+1]
-            if many_loops:
-                output = 0
-                for h in range(area.shape[0]):
-                    for k in range(area.shape[1]):
-                        output += area[h][k] * filter[h][k]
-
-            output = np.dot(area.flatten(), filter.flatten())
-            result[i, j] = output
-
-    return result
-
-   </code></pre>
-
-    <h2>Part 1.2: Finite Difference Operator</h2>
-    <p>I calculated partial derivatives along the x and y directions by passing over the finite difference filter [1, 0, -1].
-        You can then produce a gradient magnitude image by taking the square root of the sum of squares of the 2 partial derivative images.
-        Then, to get a binarized edge image, you just make each pixel either black or white based on some tolerance, 0.45 for my solution iirc.
+    <p style="text-align: center;">
+        $$\begin{bmatrix} u_i \\ v_i \\ 1 \end{bmatrix} = \begin{bmatrix} h_{11} & h_{12} & h_{13} \\ h_{21} & h_{22} & h_{23} \\ h_{31} & h_{32} & 1 \end{bmatrix} \begin{bmatrix} x_i \\ y_i \\ 1 \end{bmatrix}$$
     </p>
 
-    <div style="text-align: center; margin: 0 10px;">
-        <p><b>Original Cameraman Image</b></p>
-        <img src="images/part1/cameraman.png" style="max-width:100%; height:auto;">
+    <p>Expanding and rearranging (setting \(h_{33} = 1\) for the 8 degrees of freedom), each point gives us two equations:</p>
+
+    <p style="text-align: center;">
+        $$h_{11}x + h_{12}y + h_{13} - uh_{31}x - uh_{32}y = u$$
+        $$h_{21}x + h_{22}y + h_{23} - vh_{31}x - vh_{32}y = v$$
+    </p>
+
+    <p>With \(n\) correspondences, we get \(2n\) equations. This forms a linear system \(\mathbf{Ah} = \mathbf{b}\), where:</p>
+
+    <p style="text-align: center;">
+        $$A = \begin{bmatrix}
+        x_1 & y_1 & 1 & 0 & 0 & 0 & -u_1x_1 & -u_1y_1 \\
+        0 & 0 & 0 & x_1 & y_1 & 1 & -v_1x_1 & -v_1y_1 \\
+        \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+        x_n & y_n & 1 & 0 & 0 & 0 & -u_nx_n & -u_ny_n \\
+        0 & 0 & 0 & x_n & y_n & 1 & -v_nx_n & -v_ny_n
+        \end{bmatrix}, \quad
+        \mathbf{h} = \begin{bmatrix} h_{11} \\ h_{12} \\ h_{13} \\ h_{21} \\ h_{22} \\ h_{23} \\ h_{31} \\ h_{32} \end{bmatrix}, \quad
+        \mathbf{b} = \begin{bmatrix} u_1 \\ v_1 \\ \vdots \\ u_n \\ v_n \end{bmatrix}$$
+    </p>
+
+    <p>For \(n = 4\), this system is exactly determined. For \(n > 4\), we have an overdetermined system and solve using least-squares: \(\mathbf{h} = (A^TA)^{-1}A^T\mathbf{b}\), which in practice is computed using <code>np.linalg.lstsq()</code>.</p>
+
+    <h3>Implementation</h3>
+    <p>Here's my implementation of <code>computeH(im1_pts, im2_pts)</code>:</p>
+
+    <pre><code class="language-python">def computeH(im1_pts, im2_pts):
+    n = im1_pts.shape[0]
+    A = []
+    b = []
+
+    for i in range(n):
+        x, y = im1_pts[i]
+        u, v = im2_pts[i]
+
+        A.append([x, y, 1, 0, 0, 0, -u*x, -u*y])
+        b.append(u)
+
+        A.append([0, 0, 0, x, y, 1, -v*x, -v*y])
+        b.append(v)
+
+    A = np.array(A)
+    b = np.array(b)
+
+    h, residuals, rank, s = np.linalg.lstsq(A, b, rcond=None)
+
+    H = np.array([
+        [h[0], h[1], h[2]],
+        [h[3], h[4], h[5]],
+        [h[6], h[7], 1.0]
+    ])
+
+    return H</code></pre>
+
+    <h3>Point Correspondences</h3>
+    <p>I used matplotlib's <code>ginput()</code> function to manually select corresponding points between image pairs. The tool displays both images side-by-side and allows clicking matching features in order. Typically, I selected 8-12 correspondences for robust homography estimation.</p>
+
+    <h3>Example: Whiteboard Correspondence</h3>
+    <p>Here's an example using the whiteboard images with 4 correspondence points:</p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="images/part3/whiteboard1.jpg" alt="Whiteboard 1">
+            <p><strong>Whiteboard Image 1</strong></p>
+        </div>
+        <div class="image-container">
+            <img src="images/part3/whiteboard2.jpg" alt="Whiteboard 2">
+            <p><strong>Whiteboard Image 2</strong></p>
+        </div>
     </div>
 
-    <div style="text-align: center; margin: 0 10px;">
-        <p><b>Result of Finite Difference Filter on Cameraman Image</b></p>
-        <img src="images/part1/finite_difference_part_1_2_cropped.png" style="max-width:100%; height:auto;">
+    <p>The computed homography matrix mapping whiteboard1 to whiteboard2:</p>
+    <p style="text-align: center;">
+        $$H = \begin{bmatrix}
+        1.4448 & -0.0323 & -2258.5 \\
+        0.3376 & 1.2734 & -1026.3 \\
+        0.0001086 & -0.000005349 & 1.0000
+        \end{bmatrix}$$
+    </p>
+
+    <!-- ============= PART A.3 ============= -->
+    <h2>Part A.3: Warp the Images</h2>
+    <p>With the homography computed, I implemented image warping using inverse warping to avoid holes in the output. I implemented two interpolation methods and compared their quality and performance.</p>
+
+    <h3>Inverse Warping Approach</h3>
+    <p>Instead of mapping source pixels to destination (forward warping, which creates holes), I use inverse warping:
+    <ol>
+        <li>For each pixel \((x', y')\) in the output image</li>
+        <li>Apply \(H^{-1}\) to find where it maps in the source: \((x, y) = H^{-1}(x', y')\)</li>
+        <li>Interpolate the color from the source image at location \((x, y)\)</li>
+        <li>Assign that color to the output pixel \((x', y')\)</li>
+    </ol>
+    </p>
+
+    <h3>Interpolation Methods</h3>
+
+    <h4>1. Nearest Neighbor Interpolation</h4>
+    <p>Round the source coordinates \((x, y)\) to the nearest integer pixel. Fast but produces blocky artifacts.</p>
+    <pre><code class="language-python">def warpImageNearestNeighbor(im, H, output_width=None, output_height=None):
+    h, w, c = im.shape
+
+    if output_width and output_height:
+        out_h, out_w = output_height, output_width
+    else:
+        out_h, out_w = get_output_dimensions(im, H)
+
+    new_image = np.zeros((out_h, out_w, c + 1))
+    H_inv = np.linalg.inv(H)
+
+    for i in range(out_h):
+        for j in range(out_w):
+            dst_coord = np.array([j, i, 1])
+            src_coord = H_inv @ dst_coord
+            src_coord = src_coord / src_coord[2]
+            src_x, src_y = src_coord[:2]
+
+            src_x_nn = int(round(src_x))
+            src_y_nn = int(round(src_y))
+
+            if 0 <= src_x_nn < w and 0 <= src_y_nn < h:
+                new_image[i, j, :-1] = im[src_y_nn, src_x_nn]
+                new_image[i, j, -1] = 1
+
+    return new_image</code></pre>
+
+    <h4>2. Bilinear Interpolation</h4>
+    <p>Use weighted average of the four neighboring pixels based on fractional coordinates. Slower but produces much smoother results.</p>
+    <pre><code class="language-python">def warpImageBilinear(im, H, output_width=None, output_height=None):
+    h, w, c = im.shape
+
+    if output_width and output_height:
+        out_h, out_w = output_height, output_width
+    else:
+        out_h, out_w = get_output_dimensions(im, H)
+
+    new_image = np.zeros((out_h, out_w, c))
+    H_inv = np.linalg.inv(H)
+
+    for i in range(out_h):
+        for j in range(out_w):
+            dst_coord = np.array([j, i, 1])
+            src_coord = H_inv @ dst_coord
+            src_coord = src_coord / src_coord[2]
+            src_x, src_y = src_coord[:2]
+
+            x0, x1 = int(np.floor(src_x)), int(np.floor(src_x)) + 1
+            y0, y1 = int(np.floor(src_y)), int(np.floor(src_y)) + 1
+
+            fx = src_x - x0
+            fy = src_y - y0
+
+            if 0 <= x0 < w and 0 <= x1 < w and 0 <= y0 < h and 0 <= y1 < h:
+                new_image[i, j] = (1-fx)*(1-fy)*im[y0, x0] + \
+                                  fx*(1-fy)*im[y0, x1] + \
+                                  (1-fx)*fy*im[y1, x0] + \
+                                  fx*fy*im[y1, x1]
+
+    return new_image</code></pre>
+
+    <h3>Rectification Examples</h3>
+    <p>To test the warping implementation, I performed "rectification" - making distorted rectangles appear frontal and rectangular. I selected 4 corners of a known rectangular object (poster, book cover) and mapped them to a perfect rectangle.</p>
+
+    <h4>Example 1: Poster Rectification</h4>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="images/part3/poster.jpg" alt="Original poster">
+            <p><strong>Original (perspective distorted)</strong></p>
+        </div>
+        <div class="image-container">
+            <img src="images/part3/poster.png" alt="Rectified poster">
+            <p><strong>Rectified (frontal view)</strong></p>
+        </div>
     </div>
 
-    <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
-    <p>I compared two procedures for applying Derivative-of-Gaussian filters. In procedure 1, I blurred the original image with a Gaussian, then convolved with Dx and Dy filters to compute the gradient magnitude and binarized edge images. In procedure 2, I first convolved the Gaussian kernel with Dx and Dy to create combined filters, then applied these to the original image. Both methods produced equivalent final results.</p>
-
-    <div style="text-align: center; margin: 0 10px;">
-        <p><b>Procedure 1: Blurred Cameraman Image</b></p>
-        <img src="images/part1/Blurred_Image_part_1_3_cropped.png" style="max-width:100%; height:auto;">
+    <h4>Example 2: Book Cover Rectification</h4>
+    <div class="full-width-image">
+        <img src="images/part3/Rectification_1.png" alt="Book rectification comparison">
+        <p><strong>Rectification comparison showing original and warped result</strong></p>
     </div>
 
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>Procedure 2: DoG Applied</b></h3>
-        <img src="images/part1/DoG_Image_1_3_cropped.png" style="max-width:100%; height:auto;">
+    <h3>Speed vs Quality Comparison</h3>
+    <p>I compared the two interpolation methods:</p>
+    <ul>
+        <li><strong>Nearest Neighbor:</strong> ~0.5-2 seconds for typical images. Produces blocky/pixelated edges but is simple and fast.</li>
+        <li><strong>Bilinear:</strong> ~2-8 seconds (approximately 3-4x slower). Produces smooth, high-quality results with anti-aliased edges.</li>
+    </ul>
+    <p><strong>Trade-off:</strong> For final results, bilinear interpolation is preferred due to significantly better visual quality. Nearest neighbor is useful for quick testing and debugging. The computational overhead of bilinear is acceptable for most applications since warping is typically a one-time operation.</p>
+
+    <!-- ============= PART A.4 ============= -->
+    <h2>Part A.4: Blend Images into a Mosaic</h2>
+    <p>The final step is combining multiple warped images into a seamless mosaic. I implemented weighted blending to avoid harsh edges in overlap regions.</p>
+
+    <h3>Mosaicing Procedure</h3>
+    <ol>
+        <li><strong>Choose reference image:</strong> One image stays in its original coordinate system</li>
+        <li><strong>Warp other images:</strong> Use \(H^{-1}\) to transform other images into the reference frame</li>
+        <li><strong>Compute canvas size:</strong> Find bounding box that contains all images by transforming corners</li>
+        <li><strong>Composite with blending:</strong> In overlap regions, use weighted averaging to smoothly blend</li>
+    </ol>
+
+    <h3>Blending Strategy</h3>
+    <p>For pixels where both images have content (overlap region), I use weighted averaging:</p>
+    <p style="text-align: center;">
+        $$\text{output\_pixel} = \alpha \times \text{image1\_pixel} + (1 - \alpha) \times \text{image2\_pixel}$$
+    </p>
+    <p>I typically use \(\alpha = 0.6\) to give slight preference to the reference image, though \(\alpha = 0.5\) produces symmetric blending.</p>
+
+    <h3>Mosaic Results</h3>
+
+    <p><strong>Note:</strong> Some of the following mosaics exhibit distortion and alignment issues due to inaccurate homography matrices. These H matrices were computed using too few correspondence points (4-8 points). Better results would be achieved with 12-20 correspondence points for more robust homography estimation.</p>
+
+    <h4>Mosaic 1: Robotics Lab (ur1 & ur2)</h4>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="images/part3/ur1.jpg" alt="Robotics lab source 1">
+            <p><strong>Robotics Lab Source 1</strong></p>
+        </div>
+        <div class="image-container">
+            <img src="images/part3/ur2.jpg" alt="Robotics lab source 2">
+            <p><strong>Robotics Lab Source 2</strong></p>
+        </div>
     </div>
-
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>DoG Filters</b></h3>
-        <img src="images/part1/Derivative_of_Gaussian.png" style="max-width:100%; height:auto;">
+    <div class="full-width-image">
+        <img src="images/part3/ur7e_mosaic.png" alt="Robotics lab mosaic">
+        <p><strong>Merged Mosaic - Robotics Lab</strong></p>
     </div>
+    <p>This robotics lab mosaic shows some distortion artifacts. The quality could be significantly improved by using more correspondence points (e.g., 12-20 instead of 4-8) to compute a more accurate homography matrix H.</p>
 
-    <h2>Part 2.1: Image Sharpening</h2>
-    <p>Image sharpening is actually surprisingly easy to implement! </p>
-    <p>The key idea is by isolating the high frequency components from the image, and adding scaled versions of them back to the image.</p>
-    <p>You can get the high frequency components by just subtracting the low frequency components from the image itself. </p>
-    <p>The Low Frequency components are really easy to seperate, you can get them just by convolving a Gaussian Kernel over the image</p>
-
-    <div style="text-align: center; margin: 0 10px;">
-        <img src="images/part2/taj_sharpening_demo_cropped.png" style="max-width:150%; height:auto;">
+    <h4>Mosaic 2: Outdoor Scene (p3 & p4)</h4>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="images/part3/p3.jpg" alt="Outdoor source 1">
+            <p><strong>Outdoor Source 1</strong></p>
+        </div>
+        <div class="image-container">
+            <img src="images/part3/p4.jpg" alt="Outdoor source 2">
+            <p><strong>Outdoor Source 2</strong></p>
+        </div>
     </div>
-
-    <p>I also applied sharpening to a selfie of me to demonstrate edge enhancement.</p>
-    <div style="text-align: center; margin: 0 10px;">
-        <img src="images/part2/daniel_sharpening_demo.png" style="max-width:150%; height:auto;">
+    <div class="full-width-image">
+        <img src="images/part3/shitty_mosaic_1.png" alt="Outdoor mosaic">
+        <p><strong>Merged Mosaic - Outdoor Scene</strong></p>
     </div>
+    <p>This outdoor scene mosaic demonstrates blending across natural lighting variations with smooth transitions in the overlap region.</p>
 
-    <h2>Part 2.2: Hybrid Images</h2>
-    <p>Making hybrid images is surprisingly easy! (Given that the images are aligned using the already given starter code)</p>
-    <p>All you have to do, is combine the low-pass filtered version of one image, with the high-pass filtered version of another image</p>
-    <p>The low frequnecy image will become more apparent when viewed from far away, while the high frequency version will be more apparent when close up</p>
-
-
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>LeBron and Bronny James Merged Together</b></h3>
-        <img src="images/part2/bron_bronny_merged_cropped.png" style="max-width:100%; height:auto;">
+    <h4>Mosaic 3: Whiteboard Panorama (whiteboard1 & whiteboard2)</h4>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="images/part3/whiteboard1.jpg" alt="Whiteboard source 1">
+            <p><strong>Whiteboard Source 1</strong></p>
+        </div>
+        <div class="image-container">
+            <img src="images/part3/whiteboard2.jpg" alt="Whiteboard source 2">
+            <p><strong>Whiteboard Source 2</strong></p>
+        </div>
     </div>
-
-    <div style="text-align: center; margin: 0 10px;">
-        <p><b>FFT of Images</b></p>
-        <img src="images/part2/fft_final_cropped.png" style="max-width:100%; max-height:300px; height:auto; width:auto;">
+    <div class="full-width-image">
+        <img src="images/part3/whiteboard_mosaic.png" alt="Whiteboard mosaic">
+        <p><strong>Merged Mosaic - Whiteboard Panorama</strong></p>
     </div>
+    <p>This whiteboard mosaic demonstrates planar surface alignment, with smooth blending across the seam to create a wide-angle view.</p>
 
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>Tom Brady and Drake Maye Merged</b></h3>
-        <img src="images/part2/Brady_Maye_cropped.png" style="max-width:100%; height:auto;">
-    </div>
-
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>Derek and His Cat Merged</b></h3>
-        <img src="images/part2/Derek_Cat.png" style="max-width:100%; height:auto;">
-    </div>
-
-    <h2>Part 2.3: Gaussian and Laplacian Stacking</h2>
-    <p>Gaussian and Laplacian stacks are also implemented here. </p>
-    <p>Gaussian stacks start with an initial image, and then progressively blur it more and more each layer</p>
-    <p>Laplacian stacks follow the same principle, but subtracting the low frequency portion from the image in each layer</p>
-    <p>Here's the Laplacian Stacks used to merge the apple and orange images:</p>
-    <p>To merge images, you also take the laplacian of the mask, using the formula given in the paper:</p>
-    
-<p style="text-align: center;">
-    $$L_S(i, j) = G_R(i, j) \, L_A(i, j) + (1 - G_R(i, j)) \, L_B(i, j)$$
-</p>
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>Apple and Orange Merge</b></h3>
-        <img src="images/part_3/orange_blend_final.png" style="max-width:100%; height:auto;">
-    </div>
-
-    <h2>Part 2.4: Multiresolution Blending</h2>
-    <div style="text-align: center; margin: 0 10px;">
-        <h3><b>Tom Brady and Drake Maye Images Merged</b></h3>
-        <img src="images/part_3/brady_maye_split.png" style="max-width:100%; height:auto;">
-    </div>
-
-    <div style="text-align: center; margin: 0 10px;">
-        <p><b>LeBron and Bronny Jr Images Merged</b></p>
-        <img src="images/part_3/bron_bronny_split.png" style="max-width:100%; height:auto;">
-    </div>
-
-    <!-- Prism.js JS (loads at end for performance) -->
+    <!-- Prism.js JS -->
     <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
 </body>
