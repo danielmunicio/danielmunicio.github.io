@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project 3: Face Morphing and Autostitching</title>
+
+  <!-- MathJax for LaTeX rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1, h2, h3 {
+      text-align: center;
+    }
+    h3 {
+      margin-top: 40px;
+    }
+    .desc {
+      max-width: 900px;
+      margin: auto;
+      line-height: 1.6;
+    }
+    .MathJax {
+      font-size: 1.1em;
+    }
+
+    /* Image containers */
+    .image-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 30px auto;
+      flex-wrap: wrap;
+      max-width: 1400px;
+    }
+    .image-row figure {
+      margin: 0;
+      text-align: center;
+      max-width: 45%;
+    }
+    .image-row.three-col figure {
+      max-width: 30%;
+    }
+    .image-row img {
+      width: 100%;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .image-row figcaption {
+      margin-top: 10px;
+      font-size: 0.95em;
+      color: #555;
+    }
+
+    /* Single image */
+    .single-image {
+      text-align: center;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    .single-image img {
+      max-width: 100%;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .single-image figcaption {
+      margin-top: 10px;
+      font-size: 0.95em;
+      color: #555;
+    }
+
+    /* Code blocks */
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Section dividers */
+    .section {
+      margin: 60px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Project 3: Face Morphing and Autostitching</h1>
+
+  <div class="desc">
+    <p>
+      This project explores image warping, mosaicing, and feature detection. Part A focuses on manual image alignment
+      using correspondence points and homographies. Part B implements automatic feature detection and matching using
+      Harris corners, ANMS, and RANSAC to create panoramic mosaics without manual intervention.
+    </p>
+  </div>
+
+  <!-- PART B: AUTOSTITCHING -->
+  <div class="section">
+    <h2>Part B: Feature Matching for Autostitching</h2>
+
+    <div class="desc">
+      <p>
+        In this part, I implemented the Multi-Image Matching using Multi-Scale Oriented Patches (MOPS) algorithm
+        to automatically detect and match features between images, enabling fully automatic panorama creation.
+      </p>
+    </div>
+
+    <h3>B.1: Harris Corner Detection and ANMS</h3>
+
+    <div class="desc">
+      <p>
+        The first step is detecting interest points using the <b>Harris Corner Detector</b>. Harris corners identify
+        points in the image where there are strong gradients in multiple directions, making them good candidates for
+        reliable feature matching.
+      </p>
+      <p>
+        However, Harris detection typically produces thousands of corners that are often clustered together. To get
+        a spatially distributed set of strong corners, I implemented <b>Adaptive Non-Maximal Suppression (ANMS)</b>,
+        which selects corners based on their suppression radius - the distance to the nearest significantly stronger corner.
+      </p>
+      <p>
+        For each corner \(i\), we compute its suppression radius \(r_i\):
+      </p>
+      <p>
+        \[
+          r_i = \min_{j} \| x_i - x_j \|_2 \quad \text{subject to} \quad h(x_j) > c_{\text{robust}} \cdot h(x_i)
+        \]
+      </p>
+      <p>
+        where \(h(x)\) is the Harris corner strength and \(c_{\text{robust}} = 0.9\). We then select the top 500 corners
+        with the largest suppression radii, ensuring spatial distribution.
+      </p>
+    </div>
+
+    <div class="single-image">
+      <figure>
+        <img src="harris_anms_comparison.png" alt="Harris corners with and without ANMS">
+        <figcaption>
+          Left: Original image. Middle: All 20,562 Harris corners (red). Right: 500 ANMS-selected corners (green).
+          ANMS effectively filters to spatially distributed strong corners.
+        </figcaption>
+      </figure>
+    </div>
+
+    <h3>B.2: Feature Descriptor Extraction</h3>
+
+    <div class="desc">
+      <p>
+        For each corner detected by ANMS, I extract a <b>feature descriptor</b> that captures the local appearance
+        around that point. This allows us to match corresponding points between different images.
+      </p>
+      <p>
+        The descriptor extraction process:
+      </p>
+      <ol>
+        <li>Extract a 40×40 pixel patch centered at the corner</li>
+        <li>Subsample by taking every 5th pixel to get an 8×8 patch</li>
+        <li>Apply bias/gain normalization: subtract mean and divide by standard deviation</li>
+        <li>Flatten to a 64x1 vector</li>
+      </ol>
+      <p>
+        The normalization step makes the descriptor invariant to brightness and contrast changes:
+      </p>
+      <p>
+        \[
+          d_{\text{norm}} = \frac{d - \mu(d)}{\sigma(d)}
+        \]
+      </p>
+    </div>
+
+    <div class="single-image">
+      <figure>
+        <img src="Feature_Descriptiors_Extraction.png" alt="Feature descriptor examples">
+        <figcaption>
+          Top: Image with 10 selected feature locations (green circles). Bottom: The corresponding 8×8 feature
+          descriptors extracted from those locations. Each descriptor captures the local texture pattern.
+        </figcaption>
+      </figure>
+    </div>
+
+    <h3>B.3: Feature Matching</h3>
+
+    <div class="desc">
+      <p>
+        To match features between two images, I use <b>Lowe's ratio test</b>. For each feature in image 1,
+        I find its two nearest neighbors in image 2 by computing the Sum of Squared Differences (SSD):
+      </p>
+      <p>
+        \[
+          \text{SSD}(d_1, d_2) = \sum_{i=1}^{64} (d_1[i] - d_2[i])^2
+        \]
+      </p>
+      <p>
+        A match is accepted only if the ratio of the nearest neighbor distance to the second-nearest neighbor
+        distance is below a threshold (0.8):
+      </p>
+      <p>
+        \[
+          \frac{\text{dist}_{1\text{st}}}{\text{dist}_{2\text{nd}}} < 0.8
+        \]
+      </p>
+      <p>
+        This ratio test filters out ambiguous matches where multiple features look similar.
+      </p>
+    </div>
+
+    <h3>B.4: RANSAC for Robust Homography Estimation</h3>
+
+    <div class="desc">
+      <p>
+        While feature matching gives us many correspondences, some are incorrect (outliers). To robustly estimate
+        the homography, I implemented <b>4-point RANSAC</b> (Random Sample Consensus):
+      </p>
+      <ol>
+        <li>Randomly sample 4 correspondence pairs</li>
+        <li>Compute homography \(H\) from these 4 points using least squares</li>
+        <li>Apply \(H\) to all points from image 1 and compute distances to their matches in image 2</li>
+        <li>Count inliers (points with distance < 5 pixels)</li>
+        <li>Repeat for 1000 iterations, keeping the \(H\) with the most inliers</li>
+        <li>Recompute \(H\) using all inliers for the final estimate</li>
+      </ol>
+      <p>
+        The homography maps points from image 1 to image 2:
+      </p>
+      <p>
+        \[
+          \begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix} = H \begin{bmatrix} x \\ y \\ 1 \end{bmatrix}
+        \]
+      </p>
+    </div>
+
+    <div class="single-image">
+      <figure>
+        <img src="ransac_001_002.png" alt="RANSAC inliers and outliers">
+        <figcaption>
+          RANSAC results showing inliers in green and outliers in red. The algorithm successfully filters out
+          incorrect matches, keeping only geometrically consistent correspondences.
+        </figcaption>
+      </figure>
+    </div>
+
+    <h3>B.5: Automatic Mosaics</h3>
+
+    <div class="desc">
+      <p>
+        Using the homography computed from RANSAC, I can now automatically create panoramic mosaics by warping
+        one image to align with another and blending them together. Below are three automatic mosaics created
+        using the full pipeline.
+      </p>
+    </div>
+
+    <div class="single-image">
+      <figure>
+        <img src="mosaic_heart1_resized_heart2_resized.png" alt="Automatic mosaic 1">
+        <figcaption>Automatic mosaic: Heart walkway panorama</figcaption>
+      </figure>
+    </div>
+
+    <div class="single-image">
+      <figure>
+        <img src="mosaic_p3_p4.png" alt="Automatic mosaic 2">
+        <figcaption>Automatic mosaic: Indoor scene</figcaption>
+      </figure>
+    </div>
+
+    <div class="single-image">
+      <figure>
+        <img src="mosaic_ur1_resized_ur2_resized.png" alt="Automatic mosaic 3">
+        <figcaption>Automatic mosaic: Robot arm workspace</figcaption>
+      </figure>
+    </div>
+
+    <h3>Comparison: Manual vs Automatic Stitching</h3>
+
+    <div class="desc">
+      <p>
+        Below I compare the manually stitched mosaics from Part A (where I hand-selected correspondence points)
+        with the automatically stitched results from Part B (using Harris corners, ANMS, and RANSAC).
+      </p>
+    </div>
+
+    <div class="image-row">
+      <figure>
+        <img src="ransac_heart1_resized_heart2_resized.png" alt="RANSAC visualization">
+        <figcaption>RANSAC: Automatic feature matching with inlier/outlier detection</figcaption>
+      </figure>
+      <figure>
+        <img src="mosaic_heart1_resized_heart2_resized.png" alt="Auto heart mosaic">
+        <figcaption>Automatic: Heart walkway mosaic (fully automated pipeline)</figcaption>
+      </figure>
+    </div>
+
+    <div class="image-row">
+      <figure>
+        <img src="ransac_p3_p4.png" alt="RANSAC indoor">
+        <figcaption>RANSAC: Indoor scene feature matching</figcaption>
+      </figure>
+      <figure>
+        <img src="mosaic_p3_p4.png" alt="Auto indoor mosaic">
+        <figcaption>Automatic: Indoor scene mosaic</figcaption>
+      </figure>
+    </div>
+
+    <div class="image-row">
+      <figure>
+        <img src="ransac_ur1_resized_ur2_resized.png" alt="RANSAC robot">
+        <figcaption>RANSAC: Robot workspace feature matching</figcaption>
+      </figure>
+      <figure>
+        <img src="mosaic_ur1_resized_ur2_resized.png" alt="Auto robot mosaic">
+        <figcaption>Automatic: Robot workspace mosaic</figcaption>
+      </figure>
+    </div>
+
+    <div class="desc">
+      <p>
+        The automatic approach produces high-quality results without any manual intervention. RANSAC successfully
+        filters out outliers (shown in red), keeping only geometrically consistent matches (shown in green).
+        The main advantage is speed and reproducibility - automatic stitching takes seconds and produces consistent
+        results, compared to minutes of careful manual point selection that can vary between attempts.
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>
