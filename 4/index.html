@@ -48,6 +48,38 @@
     .gallery .image-container {
       margin: 0;
     }
+    .training-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    .training-grid-2x4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    .training-step {
+      text-align: center;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .training-step img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .training-step .step-caption {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -82,6 +114,214 @@
   <div class="image-container">
     <img src="images/viser_vis_2.png" alt="Viser Visualization 2">
     <div class="caption">Camera frustums visualization - View 2</div>
+  </div>
+</div>
+
+<h2>Part 2: Fit a Neural Radiance Field from Multi-View Images</h2>
+
+<div class="desc">
+  <p>In this part, we implement and train a Neural Radiance Field (NeRF) model on the Lego dataset.
+  NeRF is a method for synthesizing novel views of complex scenes by representing the scene as
+  a continuous volumetric function. The model learns to map 3D coordinates and viewing directions
+  to volume density and color values.</p>
+</div>
+
+<h3>Implementation Overview</h3>
+
+<div class="desc">
+  <p><strong>Ray Generation:</strong> For each pixel, we compute a ray origin and direction in 3D world space.
+  The ray origin is the camera position (extracted from the camera-to-world matrix), and the ray direction
+  is computed by transforming the pixel coordinate to camera space using the inverse camera intrinsics,
+  then rotating it to world space.</p>
+
+  <p><strong>Point Sampling:</strong> Along each ray, we uniformly sample 64 points between near (2.0) and far (6.0)
+  planes with small random perturbations during training to prevent overfitting to a fixed set of locations.</p>
+
+  <p><strong>Neural Network:</strong> We use a deep MLP with sinusoidal positional encoding (L=10 for positions,
+  L=4 for directions) to map 3D coordinates and viewing directions to RGB colors and volume density. The network
+  has 8 layers of width 256 with ReLU activations, with the positional-encoded input concatenated at the
+  middle layer. The output uses Sigmoid for RGB colors and ReLU for density.</p>
+
+  <p><strong>Volume Rendering:</strong> We composite the sampled points along each ray using the classical
+  volume rendering equation, which accumulates color weighted by transmittance and opacity at each sample point.
+  The rendered color is compared to the ground truth pixel color using MSE loss.</p>
+
+  <p><strong>Training:</strong> The model is trained using Adam optimizer with learning rate 5e-4, batch size of
+  10,000 rays per iteration, for several thousand iterations until convergence (PSNR > 23 dB).</p>
+</div>
+
+<h3>Lego Dataset Visualizations</h3>
+
+<div class="desc">
+  <p>These visualizations show the Lego dataset's camera poses and ray sampling for NeRF training.
+  The left image displays rays being cast from a single camera viewpoint, while the right image
+  shows multiple camera positions and their corresponding rays through the scene.</p>
+</div>
+
+<div class="gallery">
+  <div class="image-container">
+    <img src="images/viser_single_camera_many_rays.png" alt="Single Camera Ray Visualization">
+    <div class="caption">Single camera with multiple rays</div>
+  </div>
+  <div class="image-container">
+    <img src="images/viser_many_camera_rays.png" alt="Multiple Camera Ray Visualization">
+    <div class="caption">Multiple cameras with rays</div>
+  </div>
+</div>
+
+<h3>Training Progression</h3>
+
+<div class="desc">
+  <p>Below shows the training progression of the NeRF model. The images display how the model
+  gradually learns to reconstruct the Lego bulldozer scene from noisy, random initialization
+  to a high-quality 3D representation. Notice how the earlier iterations (steps 0-500) show
+  the most dramatic changes as the model learns the basic structure, while later iterations
+  refine the details.</p>
+</div>
+
+<div class="training-grid">
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_0000.png" alt="Step 0">
+    <div class="step-caption">Step 0</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_0100.png" alt="Step 100">
+    <div class="step-caption">Step 100</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_0200.png" alt="Step 200">
+    <div class="step-caption">Step 200</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_0300.png" alt="Step 300">
+    <div class="step-caption">Step 300</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_0400.png" alt="Step 400">
+    <div class="step-caption">Step 400</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_0500.png" alt="Step 500">
+    <div class="step-caption">Step 500</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_1000.png" alt="Step 1000">
+    <div class="step-caption">Step 1000</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_2000.png" alt="Step 2000">
+    <div class="step-caption">Step 2000</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_5000.png" alt="Step 5000">
+    <div class="step-caption">Step 5000</div>
+  </div>
+  <div class="training-step">
+    <img src="images/lego_render_images/render_step_10000.png" alt="Step 10000">
+    <div class="step-caption">Step 10,000</div>
+  </div>
+</div>
+
+<h3>Training Metrics</h3>
+
+<div class="desc">
+  <p>The plot below shows the Peak Signal-to-Noise Ratio (PSNR) over training iterations.
+  PSNR is a common metric for measuring image quality, with higher values indicating
+  better reconstruction quality. The steady increase in PSNR demonstrates the model's
+  improving ability to accurately render the scene.</p>
+</div>
+
+<div class="image-container">
+  <img src="images/PSNR_Plot_Lego_Set.png" alt="PSNR Training Curve">
+  <div class="caption">PSNR over training iterations</div>
+</div>
+
+<h3>Novel View Synthesis</h3>
+
+<div class="desc">
+  <p>After training, the NeRF model can generate novel views of the scene from camera positions
+  that were never seen during training. The animation below shows a smooth 360-degree rotation
+  around the Lego bulldozer, demonstrating the model's ability to synthesize photorealistic
+  views from arbitrary viewpoints. This showcases NeRF's power in capturing both the geometry
+  and appearance of the 3D scene.</p>
+</div>
+
+<div class="image-container">
+  <img src="images/lego_novel_view.gif" alt="Novel View Synthesis - 360° Rotation">
+  <div class="caption">Novel view synthesis showing a complete 360° rotation around the Lego scene</div>
+</div>
+
+<h2>Part 2.6: Training with My Own Data</h2>
+
+<div class="desc">
+  <p>After successfully training on the Lego dataset, I trained a NeRF model on my custom dataset
+  captured in Part 0. This demonstrates the full pipeline from camera calibration and data capture
+  to training a functional Neural Radiance Field.</p>
+</div>
+
+<h3>Novel View Synthesis</h3>
+
+<div class="image-container">
+  <img src="images/custom_nerf_rotation.gif" alt="Custom NeRF - 360° Rotation">
+  <div class="caption">360° rotation around my custom object</div>
+</div>
+
+<h3>Code and Hyperparameter Changes</h3>
+
+<div class="desc">
+  <p>(Insert discussion of code or hyperparameter changes made for the custom dataset, including
+  adjustments to near/far planes, number of samples per ray, image resolution considerations, etc.)</p>
+</div>
+
+<h3>Training Progress</h3>
+
+<div class="desc">
+  <p>The training loss curve shows the model's convergence over iterations:</p>
+</div>
+
+<div class="image-container">
+  <img src="images/training_loss_plot.png" alt="Training Loss Curve">
+  <div class="caption">Training loss over iterations</div>
+</div>
+
+<h3>Intermediate Training Results</h3>
+
+<div class="desc">
+  <p>Below are intermediate renders showing how the model progressively learns the scene geometry and appearance:</p>
+</div>
+
+<div class="training-grid-2x4">
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_0000.png" alt="Step 0">
+    <div class="step-caption">Step 0</div>
+  </div>
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_0100.png" alt="Step 100">
+    <div class="step-caption">Step 100</div>
+  </div>
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_0500.png" alt="Step 500">
+    <div class="step-caption">Step 500</div>
+  </div>
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_1000.png" alt="Step 1000">
+    <div class="step-caption">Step 1,000</div>
+  </div>
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_5000.png" alt="Step 5000">
+    <div class="step-caption">Step 5,000</div>
+  </div>
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_10000.png" alt="Step 10000">
+    <div class="step-caption">Step 10,000</div>
+  </div>
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_25000.png" alt="Step 25000">
+    <div class="step-caption">Step 25,000</div>
+  </div>
+  <div class="training-step">
+    <img src="images/katrina_render_images/render_step_50000.png" alt="Step 50000">
+    <div class="step-caption">Step 50,000</div>
   </div>
 </div>
 
