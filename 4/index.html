@@ -10,7 +10,7 @@
       background: #f9f9f9;
       color: #333;
     }
-    h1, h2 {
+    h1, h2, h3 {
       text-align: center;
     }
     .desc {
@@ -30,10 +30,23 @@
       border-radius: 6px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
+    .image-container.small img {
+      max-width: 500px;
+    }
     .caption {
       margin-top: 10px;
       font-style: italic;
       color: #555;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 30px;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    .gallery .image-container {
+      margin: 0;
     }
   </style>
 </head>
@@ -43,15 +56,33 @@
 
 <h2>Part 0: Camera Calibration and 3D Scanning</h2>
 
+<h3>The Object: A Mini Catrina</h3>
+
 <div class="desc">
-  <p>This is a mini Catrina sculpture captured for creating a Neural Radiance Field.
-  The sculpture features a traditional Mexican Day of the Dead figure with colorful
-  details and was photographed alongside an ArUco tag for camera calibration and pose estimation.</p>
+  <p>This is a mini <strong>Catrina</strong> sculpture - a traditional Mexican Day of the Dead figure.
+  The colorful Catrina was photographed alongside an ArUco tag for camera calibration and pose estimation.</p>
 </div>
 
-<div class="image-container">
+<div class="image-container small">
   <img src="images/IMG_4889.jpg" alt="Mini Catrina Sculpture">
-  <div class="caption">Mini Catrina sculpture with ArUco tag for calibration</div>
+  <div class="caption">Mini Catrina sculpture with ArUco tag</div>
+</div>
+
+<h3>Camera Frustum Visualizations</h3>
+
+<div class="desc">
+  <p>Viser visualizations showing the estimated camera poses and frustums from multiple viewpoints of the Catrina.</p>
+</div>
+
+<div class="gallery">
+  <div class="image-container">
+    <img src="images/viser_viz.png" alt="Viser Visualization 1">
+    <div class="caption">Camera frustums visualization - View 1</div>
+  </div>
+  <div class="image-container">
+    <img src="images/viser_vis_2.png" alt="Viser Visualization 2">
+    <div class="caption">Camera frustums visualization - View 2</div>
+  </div>
 </div>
 
 </body>
