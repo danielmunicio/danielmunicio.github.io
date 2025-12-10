@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project 5: Diffusion Models</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1, h2, h3, h4 {
+      text-align: center;
+    }
+    .desc {
+      max-width: 900px;
+      margin: auto;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .image-container {
+      text-align: center;
+      margin: 30px auto;
+      max-width: 1000px;
+    }
+    .image-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .image-container.small img {
+      max-width: 500px;
+    }
+    .caption {
+      margin-top: 10px;
+      font-style: italic;
+      color: #555;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    .gallery-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    .gallery .image-item {
+      text-align: center;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .gallery .image-item img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .gallery .image-caption {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+      font-weight: 500;
+    }
+    table {
+      margin: 30px auto;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    table td {
+      padding: 15px;
+      text-align: center;
+      vertical-align: top;
+    }
+    table img {
+      width: 256px;
+      height: 256px;
+      border-radius: 4px;
+      display: block;
+      margin: 0 auto;
+    }
+    table .img-caption {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Project 5: Diffusion Models</h1>
+
+<h2>Part A: The Power of Diffusion Models</h2>
+
+<div class="desc">
+  <p>In this project, I explored diffusion models and their applications. I worked with the DeepFloyd IF model
+  to understand the diffusion process, implemented sampling loops, and used them for various tasks including
+  image generation, inpainting, and creating optical illusions.</p>
+</div>
+
+<h2>Part 0: Setup and Initial Prompts</h2>
+
+<div class="desc">
+  <p>I created custom text prompts and generated their embeddings using the DeepFloyd IF model.
+  Below are some of the images generated with different inference steps to see the quality differences.</p>
+</div>
+
+<h3>Generated Images with Different Inference Steps</h3>
+
+<table>
+  <tr>
+    <td><strong>Prompt</strong></td>
+    <td><strong>6 Inference Steps</strong></td>
+    <td><strong>20 Inference Steps</strong></td>
+    <td><strong>40 Inference Steps</strong></td>
+  </tr>
+  <tr>
+    <td><strong>"A dog catching a frisbee"</strong></td>
+    <td>
+      <img src="images/processed/dog_frisbee_part_1_1_6_inf_steps.png" alt="Dog Frisbee 6 steps">
+    </td>
+    <td>
+      <img src="images/processed/dog_frisbee_part_1_1_20_inf_steps.png" alt="Dog Frisbee 20 steps">
+    </td>
+    <td>
+      <img src="images/processed/dog_frisbee_part_1_1_40_inf_steps.png" alt="Dog Frisbee 40 steps">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>"F1 race cars crossing the finish line"</strong></td>
+    <td>
+      <img src="images/processed/f1_race_finish_part_1_1_6_inf_steps.png" alt="F1 Race 6 steps">
+    </td>
+    <td>
+      <img src="images/processed/f1_race_finish_part_1_1_20_inf_steps.png" alt="F1 Race 20 steps">
+    </td>
+    <td>
+      <img src="images/processed/f1_race_finish_part_1_1_40_inf_steps.png" alt="F1 Race 40 steps">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>"Marathon runners crossing the finish line"</strong></td>
+    <td>
+      <img src="images/processed/marathon_race_finish_part_1_1_6_inf_steps.png" alt="Marathon 6 steps">
+    </td>
+    <td>
+      <img src="images/processed/marathon_race_finish_part_1_1_20_inf_steps.png" alt="Marathon 20 steps">
+    </td>
+    <td>
+      <img src="images/processed/marathon_race_finish_part_1_1_40_inf_steps.png" alt="Marathon 40 steps">
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <h4>Observations</h4>
+  <p>The quality of generated images improves significantly with more inference steps. With only 6 steps,
+  the images are noisy and lack detail. At 20 steps, the images become much clearer and more coherent.
+  By 40 steps, the images reach high quality with fine details and realistic textures. This demonstrates
+  the trade-off between computational cost and image quality in diffusion models.</p>
+</div>
+
+<h2>Part 1: Sampling Loops</h2>
+
+<div class="desc">
+  <p>In this part, I implemented diffusion sampling loops using the pretrained DeepFloyd model.
+  I explored the forward diffusion process, classical denoising methods, one-step and iterative denoising,
+  and various advanced techniques like classifier-free guidance, image-to-image translation, inpainting,
+  visual anagrams, and hybrid images.</p>
+</div>
+
+<h3>1.1 Implementing the Forward Process</h3>
+
+<div class="desc">
+  <p>The forward process adds noise to a clean image according to the equation:</p>
+  <p><i>x<sub>t</sub> = √ᾱ<sub>t</sub> x<sub>0</sub> + √(1 - ᾱ<sub>t</sub>) ε</i></p>
+  <p>where ε ~ N(0, 1) is Gaussian noise. I implemented this process and applied it to the Campanile
+  test image at timesteps t = [250, 500, 750] to create progressively noisier versions.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_1/processed/noisy_campanile_t250.png" alt="Noisy Campanile t=250">
+      <div class="img-caption">Noisy Campanile at t=250</div>
+    </td>
+    <td>
+      <img src="output/part_1_1/processed/noisy_campanile_t500.png" alt="Noisy Campanile t=500">
+      <div class="img-caption">Noisy Campanile at t=500</div>
+    </td>
+    <td>
+      <img src="output/part_1_1/processed/noisy_campanile_t750.png" alt="Noisy Campanile t=750">
+      <div class="img-caption">Noisy Campanile at t=750</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>As expected, the image becomes progressively noisier with higher timesteps. At t=250, the structure
+  is still visible but degraded. At t=500, the image is heavily corrupted. At t=750, the image is almost
+  pure noise.</p>
+</div>
+
+<h3>1.2 Classical Denoising</h3>
+
+<div class="desc">
+  <p>I attempted to denoise the noisy images using classical Gaussian blur filtering. As expected,
+  this method struggles to recover the original image, especially at higher noise levels. The blur
+  can reduce some noise but cannot recover the lost details.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_2/processed/campanille_gaussian_blur_t250_p1_2.png" alt="Gaussian Blur t=250">
+      <div class="img-caption">Gaussian Blur Denoising at t=250</div>
+    </td>
+    <td>
+      <img src="output/part_1_2/processed/campanille_gaussian_blur_t500_p1_2.png" alt="Gaussian Blur t=500">
+      <div class="img-caption">Gaussian Blur Denoising at t=500</div>
+    </td>
+    <td>
+      <img src="output/part_1_2/processed/campanille_gaussian_blur_t750_p1_2.png" alt="Gaussian Blur t=750">
+      <div class="img-caption">Gaussian Blur Denoising at t=750</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>Classical denoising with Gaussian blur fails to recover meaningful details from the noisy images.
+  The results are blurry and lack the structure of the original Campanile. This demonstrates the
+  limitation of traditional image processing methods for this task.</p>
+</div>
+
+<h3>1.3 One-Step Denoising</h3>
+
+<div class="desc">
+  <p>Now I use the pretrained diffusion model UNet to denoise the images in a single step. The UNet
+  estimates the noise in the image, which I then remove to recover an estimate of the original image.
+  This uses the equation to predict x<sub>0</sub> from x<sub>t</sub> and the noise estimate ε.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_3/processed/part_1_3_t250.png" alt="One-Step Denoising t=250">
+      <div class="img-caption">One-Step Denoised at t=250</div>
+    </td>
+    <td>
+      <img src="output/part_1_3/processed/part_1_3_t500.png" alt="One-Step Denoising t=500">
+      <div class="img-caption">One-Step Denoised at t=500</div>
+    </td>
+    <td>
+      <img src="output/part_1_3/processed/part_1_3_t750.png" alt="One-Step Denoising t=750">
+      <div class="img-caption">One-Step Denoised at t=750</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>The diffusion model performs significantly better than Gaussian blur! At t=250, the result is quite
+  recognizable. At t=500, some structure is recovered but with artifacts. At t=750, the model struggles
+  more with the heavy noise, but still produces something on the natural image manifold. This is a vast
+  improvement over classical denoising.</p>
+</div>
+
+<h3>1.4 Iterative Denoising</h3>
+
+<div class="desc">
+  <p>While one-step denoising works reasonably well for lower noise levels, diffusion models are designed
+  to denoise iteratively. Instead of jumping directly from x<sub>t</sub> to x<sub>0</sub>, we gradually
+  denoise through intermediate timesteps. I implemented iterative denoising using strided timesteps
+  (starting at 990 with stride 30) and the DDPM denoising equation.</p>
+</div>
+
+<h4>Denoising Progression (Every 5th Step)</h4>
+
+<div class="desc">
+  <p>Starting from timestep 300 (i_start=10), showing every 5th denoising step:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_4/iterative_denoising_every_5th_step/processed/10th_image.png" alt="Step 10">
+      <div class="img-caption">Step 10</div>
+    </td>
+    <td>
+      <img src="output/part_1_4/iterative_denoising_every_5th_step/processed/15th_image.png" alt="Step 15">
+      <div class="img-caption">Step 15</div>
+    </td>
+    <td>
+      <img src="output/part_1_4/iterative_denoising_every_5th_step/processed/20th_image.png" alt="Step 20">
+      <div class="img-caption">Step 20</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_4/iterative_denoising_every_5th_step/processed/25th_image.png" alt="Step 25">
+      <div class="img-caption">Step 25</div>
+    </td>
+    <td>
+      <img src="output/part_1_4/iterative_denoising_every_5th_step/processed/30th_image.png" alt="Step 30">
+      <div class="img-caption">Step 30 (Final)</div>
+    </td>
+    <td></td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>We can see the image gradually becoming clearer and more detailed as we iterate through the denoising
+  steps. The structure emerges first, followed by finer details.</p>
+</div>
+
+<h4>Comparison of Denoising Methods</h4>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_4/processed/campanille_iterative_denoising_p1_4.png" alt="Iterative Denoising">
+      <div class="img-caption">Iterative Denoising</div>
+    </td>
+    <td>
+      <img src="output/part_1_4/processed/campanille_one_step_denoising_p1_4.png" alt="One-Step Denoising">
+      <div class="img-caption">One-Step Denoising</div>
+    </td>
+    <td>
+      <img src="output/part_1_4/processed/campanille_gaussian_denoising_p1_4.png" alt="Gaussian Blur">
+      <div class="img-caption">Gaussian Blur</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>Iterative denoising produces the best results, with sharp details and accurate structure. One-step
+  denoising is decent but lacks fine details. Gaussian blur completely fails to recover the image. This
+  clearly demonstrates the power of iterative diffusion denoising.</p>
+</div>
+
+<h3>1.5 Diffusion Model Sampling</h3>
+
+<div class="desc">
+  <p>Now I use the iterative denoising function to generate images from scratch by starting with pure
+  random noise (i_start=0). This demonstrates the model's ability to create new images from the learned
+  distribution. I generated 5 samples using the prompt "a high quality photo".</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_5/processed/sample_1.png" alt="Sample 1">
+      <div class="img-caption">Sample 1</div>
+    </td>
+    <td>
+      <img src="output/part_1_5/processed/sample_2.png" alt="Sample 2">
+      <div class="img-caption">Sample 2</div>
+    </td>
+    <td>
+      <img src="output/part_1_5/processed/sample_3.png" alt="Sample 3">
+      <div class="img-caption">Sample 3</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_5/processed/sample_4.png" alt="Sample 4">
+      <div class="img-caption">Sample 4</div>
+    </td>
+    <td>
+      <img src="output/part_1_5/processed/sample_5.png" alt="Sample 5">
+      <div class="img-caption">Sample 5</div>
+    </td>
+    <td></td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>The generated images show recognizable objects and structures, though the quality is somewhat limited.
+  The images are coherent and on the natural image manifold, but lack fine details and sharpness. This is
+  expected without using classifier-free guidance.</p>
+</div>
+
+<h3>1.6 Classifier-Free Guidance (CFG)</h3>
+
+<div class="desc">
+  <p>To improve image quality, I implemented Classifier-Free Guidance (CFG). CFG computes both conditional
+  and unconditional noise estimates, then extrapolates in the direction of the conditional estimate using
+  the formula: ε = ε<sub>u</sub> + γ(ε<sub>c</sub> - ε<sub>u</sub>). I used γ=7 for these results.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_6/processed/sample_cfg_1.png" alt="CFG Sample 1">
+      <div class="img-caption">CFG Sample 1</div>
+    </td>
+    <td>
+      <img src="output/part_1_6/processed/sample_cfg_2.png" alt="CFG Sample 2">
+      <div class="img-caption">CFG Sample 2</div>
+    </td>
+    <td>
+      <img src="output/part_1_6/processed/sample_cfg_3.png" alt="CFG Sample 3">
+      <div class="img-caption">CFG Sample 3</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_6/processed/sample_cfg_4.png" alt="CFG Sample 4">
+      <div class="img-caption">CFG Sample 4</div>
+    </td>
+    <td>
+      <img src="output/part_1_6/processed/sample_cfg_5.png" alt="CFG Sample 5">
+      <div class="img-caption">CFG Sample 5</div>
+    </td>
+    <td></td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>With CFG, the image quality improves dramatically! The results are much sharper, more detailed, and
+  more coherent compared to sampling without guidance. The objects are more clearly defined and the overall
+  composition is better. This demonstrates the significant impact of classifier-free guidance on generation
+  quality.</p>
+</div>
+
+</body>
+</html>
