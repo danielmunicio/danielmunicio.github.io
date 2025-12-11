@@ -10,7 +10,7 @@
       background: #f9f9f9;
       color: #333;
     }
-    h1, h2, h3, h4 {
+    h1, h2, h3, h4, h5, h6 {
       text-align: center;
     }
     .desc {
@@ -100,19 +100,10 @@
 
 <h1>Project 5: Diffusion Models</h1>
 
-<h2>Part A: The Power of Diffusion Models</h2>
-
-<div class="desc">
-  <p>In this project, I explored diffusion models and their applications. I worked with the DeepFloyd IF model
-  to understand the diffusion process, implemented sampling loops, and used them for various tasks including
-  image generation, inpainting, and creating optical illusions.</p>
-</div>
-
 <h2>Part 0: Setup and Initial Prompts</h2>
 
 <div class="desc">
-  <p>I created custom text prompts and generated their embeddings using the DeepFloyd IF model.
-  Below are some of the images generated with different inference steps to see the quality differences.</p>
+  <p>I wrote custom text prompts and generated their embeddings using Jameson's provided Huggingface page, and I generated these images with random seed 100.</p>
 </div>
 
 <h3>Generated Images with Different Inference Steps</h3>
@@ -164,20 +155,10 @@
 
 <div class="desc">
   <h4>Observations</h4>
-  <p>The quality of generated images improves significantly with more inference steps. With only 6 steps,
-  the images are noisy and lack detail. At 20 steps, the images become much clearer and more coherent.
-  By 40 steps, the images reach high quality with fine details and realistic textures. This demonstrates
-  the trade-off between computational cost and image quality in diffusion models.</p>
+  <p>The quality of the images improves a lot with more inference steps, but after a while, they just begin adding more details that aren't necessarily needed, while the 6-10 inference steps gap is much bigger, where it's actually meaningfully removing grain and noise still.</p>
 </div>
 
 <h2>Part 1: Sampling Loops</h2>
-
-<div class="desc">
-  <p>In this part, I implemented diffusion sampling loops using the pretrained DeepFloyd model.
-  I explored the forward diffusion process, classical denoising methods, one-step and iterative denoising,
-  and various advanced techniques like classifier-free guidance, image-to-image translation, inpainting,
-  visual anagrams, and hybrid images.</p>
-</div>
 
 <h3>1.1 Implementing the Forward Process</h3>
 
@@ -236,12 +217,6 @@
   </tr>
 </table>
 
-<div class="desc">
-  <p>Classical denoising with Gaussian blur fails to recover meaningful details from the noisy images.
-  The results are blurry and lack the structure of the original Campanile. This demonstrates the
-  limitation of traditional image processing methods for this task.</p>
-</div>
-
 <h3>1.3 One-Step Denoising</h3>
 
 <div class="desc">
@@ -270,8 +245,7 @@
 <div class="desc">
   <p>The diffusion model performs significantly better than Gaussian blur! At t=250, the result is quite
   recognizable. At t=500, some structure is recovered but with artifacts. At t=750, the model struggles
-  more with the heavy noise, but still produces something on the natural image manifold. This is a vast
-  improvement over classical denoising.</p>
+  more with the heavy noise, but still produces something on the natural image manifold. The general shape is still recovered, but the image loses some of the finer details at the top of the campanile.</p>
 </div>
 
 <h3>1.4 Iterative Denoising</h3>
@@ -384,9 +358,7 @@
 </table>
 
 <div class="desc">
-  <p>The generated images show recognizable objects and structures, though the quality is somewhat limited.
-  The images are coherent and on the natural image manifold, but lack fine details and sharpness. This is
-  expected without using classifier-free guidance.</p>
+  <p>The images seem to be images, but they're not really of anything necessarily recognizable, and just seems like an image created pretty randomly.</p>
 </div>
 
 <h3>1.6 Classifier-Free Guidance (CFG)</h3>
@@ -431,6 +403,527 @@
   composition is better. This demonstrates the significant impact of classifier-free guidance on generation
   quality.</p>
 </div>
+
+<h3>1.7 Image-to-image Translation</h3>
+
+<div class="desc">
+  <p>In this section, I explored SDEdit-style image-to-image translation. By adding noise to a real image
+  and then denoising it with CFG, we can create variations of the image. The amount of noise determines how
+  much the output deviates from the original - lower noise levels preserve more of the original structure,
+  while higher noise levels allow for more creative variation.</p>
+</div>
+
+<h4>Campanile Image-to-Image Translation</h4>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7/web_image_i_start_1.png" alt="i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/web_image_i_start_3.png" alt="i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/web_image_i_start_5.png" alt="i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7/web_image_i_start_7.png" alt="i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/web_image_i_start_10.png" alt="i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/web_image_i_start_20.png" alt="i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>As expected, with lower i_start values (less noise), the output closely resembles the original
+  Campanile. As we increase i_start (more noise), the model has more freedom to deviate from the original
+  while still maintaining some structural similarity.</p>
+</div>
+
+<h4>Additional Test Images</h4>
+
+<h5>LeBron Fadeaway</h5>
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7/lebron_i_start_1.png" alt="LeBron i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/lebron_i_start_3.png" alt="LeBron i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/lebron_i_start_5.png" alt="LeBron i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7/lebron_i_start_7.png" alt="LeBron i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/lebron_i_start_10.png" alt="LeBron i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/lebron_i_start_20.png" alt="LeBron i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" style="text-align: center;">
+      <img src="output/part_1_7/lebron_fadeaway_original.jpg" alt="Original LeBron Fadeaway" style="width: 256px;">
+      <div class="img-caption">Original LeBron Fadeaway</div>
+    </td>
+  </tr>
+</table>
+
+<h5>Tom Brady</h5>
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7/tom_brady_i_start_1.png" alt="Tom Brady i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/tom_brady_i_start_3.png" alt="Tom Brady i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/tom_brady_i_start_5.png" alt="Tom Brady i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7/tom_brady_i_start_7.png" alt="Tom Brady i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/tom_brady_i_start_10.png" alt="Tom Brady i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7/tom_brady_i_start_20.png" alt="Tom Brady i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+</table>
+
+<h4>1.7.1 Editing Hand-Drawn and Web Images</h4>
+
+<div class="desc">
+  <p>The SDEdit procedure works particularly well when starting with non-realistic images like sketches
+  or drawings. By projecting these onto the natural image manifold, we can transform simple drawings into
+  realistic photos while preserving the overall composition.</p>
+</div>
+
+<h5>Web Image of Guy Locking In</h5>
+
+<div class="desc">
+  <p>I found a web image and applied the same noise and denoising procedure at different
+  noise levels:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7_1_web/web_image/web_image_i_start_1.png" alt="Web i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/web_image/web_image_i_start_3.png" alt="Web i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/web_image/web_image_i_start_5.png" alt="Web i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7_1_web/web_image/web_image_i_start_7.png" alt="Web i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/web_image/web_image_i_start_10.png" alt="Web i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/web_image/web_image_i_start_20.png" alt="Web i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" style="text-align: center;">
+      <img src="output/part_1_7_1_web/web_image/start_image.png" alt="Original Web Image of Guy Locking In" style="width: 256px;">
+      <div class="img-caption">Original Web Image</div>
+    </td>
+  </tr>
+</table>
+
+<h5>Hand-Drawn Image 1: Car</h5>
+
+<div class="desc">
+  <p>I drew a simple car sketch and applied the SDEdit procedure to transform it into a realistic image:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_car/hand_drawn_car_i_start_1.png" alt="Car i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_car/hand_drawn_car_i_start_3.png" alt="Car i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_car/hand_drawn_car_i_start_5.png" alt="Car i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_car/hand_drawn_car_i_start_7.png" alt="Car i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_car/hand_drawn_car_i_start_10.png" alt="Car i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_car/hand_drawn_car_i_start_20.png" alt="Car i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" style="text-align: center;">
+      <img src="output/part_1_7_1_web/hand_drawn_car/car_drawing.png" alt="Original Car Drawing" style="width: 256px;">
+      <div class="img-caption">Original Hand-Drawn Car</div>
+    </td>
+  </tr>
+</table>
+
+<h5>Hand-Drawn Image 2: Cat</h5>
+
+<div class="desc">
+  <p>I drew a simple cat sketch and applied the same procedure:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_cat/hand_drawn_cat_i_start_1.png" alt="Cat i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_cat/hand_drawn_cat_i_start_3.png" alt="Cat i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_cat/hand_drawn_cat_i_start_5.png" alt="Cat i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_cat/hand_drawn_cat_i_start_7.png" alt="Cat i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_cat/hand_drawn_cat_i_start_10.png" alt="Cat i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_1_web/hand_drawn_cat/hand_drawn_cat_i_start_20.png" alt="Cat i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3" style="text-align: center;">
+      <img src="output/part_1_7_1_web/hand_drawn_cat/drawn_cat_image.png" alt="Original Cat Drawing" style="width: 256px;">
+      <div class="img-caption">Original Hand-Drawn Cat</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <h4>Observations on Hand-Drawn Images</h4>
+  <p>My hand-drawn images were generally so bad, that the model couldn't create a realistic version of the car or cat that I drew, but it's still interesting to see what it came up with from those drawings.</p>
+</div>
+
+<h4>1.7.2 Inpainting</h4>
+
+<div class="desc">
+  <p>Following the RePaint paper, I implemented inpainting by combining the diffusion denoising process
+  with masked replacement. At each denoising step, after obtaining x_t, I replace the unmasked regions
+  with the appropriately noised original image. This allows the model to fill in holes or edit specific
+  regions while preserving the rest of the image.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7_2/campanile.png" alt="Campanile Inpainted">
+      <div class="img-caption">Campanile Inpainted</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_2/tom_brady_throwing_pie.png" alt="Tom Brady Throwing Pie">
+      <div class="img-caption">Tom Brady Throwing a Pie</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7_2/tom_brady_throwing_watermelon.png" alt="Tom Brady Throwing Watermelon">
+      <div class="img-caption">Tom Brady Throwing a Watermelon</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_2/lebron_shooting_watermelon.png" alt="LeBron Shooting Pumpkin">
+      <div class="img-caption">LeBron Shooting a Pumpkin</div>
+    </td>
+  </tr>
+</table>
+
+<h4>1.7.3 Text-Conditional Image-to-image Translation</h4>
+
+<div class="desc">
+  <p>Now I extend the SDEdit procedure by using text prompts to guide the image generation. Instead of
+  using the generic prompt "a high quality photo", I use specific text prompts that describe what I want
+  the image to become. This gives us control over the creative direction while still preserving some
+  structure from the original image.</p>
+</div>
+
+<h5>Campanile with "A Rocket Ship" Prompt</h5>
+
+<div class="desc">
+  <p>I applied the text-conditional SDEdit with the prompt "a rocket ship" to transform the Campanile
+  into a rocket ship at various noise levels:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7_3/campanille_rocket_image_i_start_1.png" alt="Rocket i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/campanille_rocket_image_i_start_3.png" alt="Rocket i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/campanille_rocket_image_i_start_5.png" alt="Rocket i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7_3/campanille_rocket_image_i_start_7.png" alt="Rocket i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/campanille_rocket_image_i_start_10.png" alt="Rocket i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/campanille_rocket_image_i_start_20.png" alt="Rocket i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>With lower noise levels, the rocket ship retains the verticalness and structure of the Campanile. But by i_start=5, the rocket generally doesn't really retain anything of the original scene, except maybe the sky and surrounding scenery, but generally loses a lot of the original image.</p>
+</div>
+
+<h5>LeBron with "A Photo of a Man" Prompt</h5>
+
+<div class="desc">
+  <p>I applied the text-conditional SDEdit with the prompt "a photo of a man" to the LeBron fadeaway image:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7_3/lebron_with_prompt_a_photo_of_a_man_image_i_start_1.png" alt="LeBron Man i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/lebron_with_prompt_a_photo_of_a_man_image_i_start_3.png" alt="LeBron Man i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/lebron_with_prompt_a_photo_of_a_man_image_i_start_5.png" alt="LeBron Man i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7_3/lebron_with_prompt_a_photo_of_a_man_image_i_start_7.png" alt="LeBron Man i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/lebron_with_prompt_a_photo_of_a_man_image_i_start_10.png" alt="LeBron Man i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/lebron_with_prompt_a_photo_of_a_man_image_i_start_20.png" alt="LeBron Man i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+</table>
+
+<h5>Tom Brady with "A Photo of a Man" Prompt</h5>
+
+<div class="desc">
+  <p>I applied the same text-conditional SDEdit with the prompt "a photo of a man" to the Tom Brady image:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_7_3/tom_with_prompt_a_photo_of_a_man_image_i_start_1.png" alt="Tom Man i_start=1">
+      <div class="img-caption">i_start=1</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/tom_with_prompt_a_photo_of_a_man_image_i_start_3.png" alt="Tom Man i_start=3">
+      <div class="img-caption">i_start=3</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/tom_with_prompt_a_photo_of_a_man_image_i_start_5.png" alt="Tom Man i_start=5">
+      <div class="img-caption">i_start=5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="output/part_1_7_3/tom_with_prompt_a_photo_of_a_man_image_i_start_7.png" alt="Tom Man i_start=7">
+      <div class="img-caption">i_start=7</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/tom_with_prompt_a_photo_of_a_man_image_i_start_10.png" alt="Tom Man i_start=10">
+      <div class="img-caption">i_start=10</div>
+    </td>
+    <td>
+      <img src="output/part_1_7_3/tom_with_prompt_a_photo_of_a_man_image_i_start_20.png" alt="Tom Man i_start=20">
+      <div class="img-caption">i_start=20</div>
+    </td>
+  </tr>
+</table>
+
+<h3>1.8 Visual Anagrams</h3>
+
+<div class="desc">
+  <p>Visual anagrams are optical illusions created with diffusion models. An image appears to depict one scene
+  when viewed normally, but reveals a completely different scene when flipped upside down. This is achieved by
+  averaging the noise estimates from two different prompts - one for the normal orientation and one for the
+  flipped orientation.</p>
+
+  <p>The algorithm works as follows: At each denoising step, we denoise the image normally with prompt p<sub>1</sub>
+  to get noise estimate ε<sub>1</sub>. Simultaneously, we flip the image upside down, denoise with prompt
+  p<sub>2</sub> to get ε<sub>2</sub>, flip ε<sub>2</sub> back, and average the two noise estimates:
+  ε = (ε<sub>1</sub> + ε<sub>2</sub>) / 2. This composite noise estimate guides the diffusion process to create
+  an image that satisfies both prompts in their respective orientations.</p>
+</div>
+
+<h4>Visual Anagram 1: Old Man / People Around Campfire</h4>
+
+<div class="desc">
+  <p>This illusion shows "an oil painting of an old man" when viewed normally, but reveals "an oil painting of
+  people around a campfire" when flipped upside down.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_8/visual_anagram_campfire_oldman_normal.png" alt="An Oil Painting of an Old Man">
+      <div class="img-caption">An Oil Painting of an Old Man</div>
+    </td>
+    <td>
+      <img src="output/part_1_8/visual_anagram_campfire_oldman_flipped.png" alt="An Oil Painting of People Around a Campfire">
+      <div class="img-caption">An Oil Painting of People Around a Campfire (Flipped)</div>
+    </td>
+  </tr>
+</table>
+
+<h4>Visual Anagram 2: Man Wearing a Hat / Amalfi Coast</h4>
+
+<div class="desc">
+  <p>This illusion shows "a man wearing a hat" when viewed normally, but reveals "the Amalfi Coast"
+  when flipped upside down.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_8/visual_anagram_almafi_coast_waterfalls_normal.png" alt="A Man Wearing a Hat">
+      <div class="img-caption">A Man Wearing a Hat</div>
+    </td>
+    <td>
+      <img src="output/part_1_8/visual_anagram_almafi_coast_waterfalls_flipped.png" alt="The Amalfi Coast">
+      <div class="img-caption">The Amalfi Coast (Flipped)</div>
+    </td>
+  </tr>
+</table>
+
+<h3>1.9 Hybrid Images</h3>
+
+<div class="desc">
+  <p>Following the Factorized Diffusion approach, I created hybrid images using diffusion models. Similar to
+  Project 2, hybrid images combine low-frequency content from one image with high-frequency content from another.
+  When viewed close up, you see the high-frequency details, but from far away, the low-frequency content dominates.</p>
+
+  <p>The algorithm: At each denoising step, we compute two noise estimates using different prompts: ε<sub>1</sub>
+  from prompt p<sub>1</sub> and ε<sub>2</sub> from prompt p<sub>2</sub>. We then apply frequency separation:
+  ε = f<sub>lowpass</sub>(ε<sub>1</sub>) + f<sub>highpass</sub>(ε<sub>2</sub>). This combines the low frequencies
+  of the first prompt with the high frequencies of the second prompt. I used a Gaussian blur with kernel size 33
+  and sigma 2 for the low-pass filter.</p>
+</div>
+
+<h4>Hybrid Image 1: Skull / Waterfall</h4>
+
+<div class="desc">
+  <p>This hybrid image combines "a lithograph of a skull" (high frequencies) with "a lithograph of a waterfall"
+  (low frequencies). View it close up to see the skull, or zoom out / step back to see the waterfall.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_9/skull_waterfall.png" alt="Hybrid: Skull and Waterfall">
+      <div class="img-caption">Hybrid Image: Skull (close) / Waterfall (far)</div>
+    </td>
+  </tr>
+</table>
+
+<h4>Hybrid Image 2: Rocket Ship / Pencil</h4>
+
+<div class="desc">
+  <p>This hybrid image combines "a rocket ship" (high frequencies) with "a pencil" (low frequencies). The vertical
+  structure works well for both objects at different frequencies.</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="output/part_1_9/rocket_ship_and_pencil_2.png" alt="Hybrid: Rocket Ship and Pencil">
+      <div class="img-caption">Hybrid Image: Rocket Ship (close) / Pencil (far)</div>
+    </td>
+  </tr>
+</table>
 
 </body>
 </html>
