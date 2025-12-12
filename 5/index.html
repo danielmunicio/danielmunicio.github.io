@@ -925,5 +925,198 @@
   </tr>
 </table>
 
+<h2>Part B: Training Diffusion Models from Scratch</h2>
+
+<h3>1.2.1 Training a UNet Denoiser (σ=0.5)</h3>
+
+<div class="desc">
+  <p>Here, I trained the UNet Model using the given architecture, to denoise images from the MNIST dataset, given they were noised with the created function, with args of sigma=0.5. I used the training parameters (batch size, learning rate, hidden dimension), given in the project spec.</p>
+</div>
+
+<h4>Training Loss Curve</h4>
+<div class="image-container">
+  <img src="part2/training_loss.png" alt="Training Loss Curve">
+  <div class="caption">Training loss decreases steadily over 5 epochs</div>
+</div>
+
+<h4>Denoising Results: Epoch 1 vs Epoch 5</h4>
+<div class="image-container">
+  <img src="part2/denoising_results.png" alt="Denoising Results">
+  <div class="caption">Left: After 1 epoch | Right: After 5 epochs. Rows show clean images, noisy images (σ=0.5), and denoised outputs.</div>
+</div>
+
+<div class="desc">
+  <p>The denoiser shows significant improvement from epoch 1 to epoch 5. After just one epoch, the model can
+  already recover recognizable digits. By epoch 5, the denoised images are very close to the original clean images,
+  demonstrating the model's effectiveness at noise removal.</p>
+</div>
+
+<h3>1.2.2 Out-of-Distribution Testing</h3>
+
+<div class="desc">
+  <p>I tested the denoiser on different noise levels (σ = 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0) to evaluate its
+  generalization. The model was only trained on σ=0.5, so other noise levels are out-of-distribution.</p>
+</div>
+
+<div class="image-container">
+  <img src="part2/ood_denoising_results.png" alt="Out-of-Distribution Results">
+  <div class="caption">Testing the denoiser on various noise levels</div>
+</div>
+
+<div class="desc">
+  <p>The model obviously does great at sigma=0.5, but also does well anywhere from sigma=0.0, to sigma=0.6, and even at sigma=0.8, you can more or less make out the number.</p>
+</div>
+
+<h3>1.2.3 Denoising Pure Noise</h3>
+
+<div class="desc">
+  <p>I trained a model to denoise pure random noise (x₀ ~ N(0, I)) to clean MNIST images. This is a generative
+  task where the model learns to produce digit-like images from completely random input.</p>
+</div>
+
+<h4>Training Loss Curve (Pure Noise)</h4>
+<div class="image-container">
+  <img src="part2/training_loss_pure_noise.png" alt="Pure Noise Training Loss">
+  <div class="caption">Training loss for pure noise denoising</div>
+</div>
+
+<h4>Pure Noise Denoising Results</h4>
+<div class="image-container">
+  <img src="part2/denoising_results_pure_noise.png" alt="Pure Noise Results">
+  <div class="caption">Results after epochs 1 and 5 of denoising pure noise</div>
+</div>
+
+<div class="desc">
+  <h4>Observations</h4>
+  <p>When trained to denoise pure noise, the model learns to generate a "blurry average" of all MNIST digits.
+  This occurs because:</p>
+  <ul style="max-width: 800px; margin: 20px auto; text-align: left;">
+    <li>With MSE loss, the model minimizes the sum of squared distances to all training examples</li>
+    <li>Pure random noise contains no information about which digit to generate</li>
+    <li>The optimal prediction is the centroid/mean of the training distribution</li>
+    <li>This results in ghost-like images containing features from multiple digits but not representing any single digit clearly</li>
+  </ul>
+</div>
+
+<h3>2.2 Training Time-Conditioned UNet (Flow Matching)</h3>
+
+<div class="desc">
+  <p>I implemented flow matching with a time-conditioned UNet. The model learns to predict the flow field
+  that transforms noise into data. Time conditioning allows the model to know where it is in the denoising
+  process, using FCBlocks to modulate the UNet features based on timestep t ∈ [0,1].</p>
+</div>
+
+<h4>Training Loss Curve (Flow Matching)</h4>
+<div class="image-container">
+  <img src="part2/flow_matching_training_loss.png" alt="Flow Matching Training Loss">
+  <div class="caption">Training loss for time-conditioned flow matching model</div>
+</div>
+
+<h3>2.3 Training Progress: Epochs 1, 5, and 10</h3>
+<div class="desc">
+  <p>Comparing sample quality after different amounts of training:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_epoch_1.png" alt="Epoch 1 Samples">
+      <div class="img-caption">After Epoch 1</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_epoch_5.png" alt="Epoch 5 Samples">
+      <div class="img-caption">After Epoch 5</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_epoch_10.png" alt="Epoch 10 Samples">
+      <div class="img-caption">After Epoch 10</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>Sample quality improves dramatically with more training. After epoch 1, the model generates recognizable
+  shapes but with artifacts. By epoch 10, the generated digits are sharp and realistic.</p>
+</div>
+
+<h3>2.5 Class-Conditional Training Loss</h3>
+
+<div class="desc">
+  <p>Training loss curve for the class-conditional flow matching model with classifier-free guidance.</p>
+</div>
+
+<div class="image-container">
+  <img src="part2/class_conditional_training_loss.png" alt="Class-Conditional Training Loss">
+  <div class="caption">Training loss for class-conditional model with CFG dropout</div>
+</div>
+
+<h3>2.6 Class-Conditional Generation with CFG</h3>
+
+<div class="desc">
+  <p>I added class conditioning to the UNet using one-hot vectors for digit labels (0-9). During training,
+  I applied 10% dropout to the class conditioning to enable classifier-free guidance (CFG). At inference,
+  CFG with γ=5.0 significantly improves generation quality and allows controlled digit generation.</p>
+</div>
+
+<h4>Class-Conditional Training Progress (Scheduled Learning Rate)</h4>
+<div class="desc">
+  <p>Showing 4 instances of each digit at different training stages with exponential learning rate scheduler:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_cfg_scheduled_epoch_1.png" alt="CFG Epoch 1 Scheduled">
+      <div class="img-caption">After Epoch 1 (γ=5.0, T=10)</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_cfg_scheduled_epoch_5.png" alt="CFG Epoch 5 Scheduled">
+      <div class="img-caption">After Epoch 5 (γ=5.0, T=10)</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_cfg_scheduled_epoch_10.png" alt="CFG Epoch 10 Scheduled">
+      <div class="img-caption">After Epoch 10 (γ=5.0, T=10)</div>
+    </td>
+  </tr>
+</table>
+
+<div class="desc">
+  <p>I also removed the learning rate scheduler, and kept a constant learning rate of 1e-3. This works well because the learning rate is low enough we don't need to decrease it by much, and Adam optimizer has variable learning rates for different parts of training, that generally do pretty well at this.</p>
+</div>
+
+<h4>Class-Conditional Training Progress (Fixed Learning Rate)</h4>
+<div class="desc">
+  <p>Here we can see that training with the fixed learning rate hardly effects results. Showing 4 instances of each digit at different training stages with constant LR=1e-3:</p>
+</div>
+
+<table>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_cfg_epoch_1.png" alt="CFG Epoch 1">
+      <div class="img-caption">After Epoch 1 (γ=5.0, T=10)</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_cfg_epoch_5.png" alt="CFG Epoch 5">
+      <div class="img-caption">After Epoch 5 (γ=5.0, T=10)</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="part2/flow_matching_samples_cfg_epoch_10.png" alt="CFG Epoch 10">
+      <div class="img-caption">After Epoch 10 (γ=5.0, T=10)</div>
+    </td>
+  </tr>
+</table>
+
 </body>
 </html>
